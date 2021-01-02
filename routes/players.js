@@ -1,7 +1,11 @@
 require('dotenv').config(); 
+const config = require('config');
 const debug = require('debug')('routesPlayers');
-const { Player, validate } = require('../models/player')
-const { Game } = require('../models/game')
+const { Player, validate } = require('../models/player');
+const { Game } = require('../models/game');
+const auth = require('../middleware/auth')
+const _ = require('lodash');
+const bcrypt = require('bcrypt');
 const express = require('express');
 const router = express.Router();
 
@@ -9,7 +13,7 @@ router.get('/', async (req, res) => {
     const players = await Player
         .find()
         .sort("name")
-        .select('-_id -__v')
+        .select('-_id -__v -password')
         .populate({
             path: "games_id",
             select: "-_id -__v",
@@ -27,7 +31,7 @@ router.get('/:id', async (req, res) => {
     try {
         const player = await Player
             .findById(req.params.id)
-            .select('-_id -__v')
+            .select('-_id -__v -password')
             .populate({
                 path: "games_id",
                 select: "-_id -__v",
@@ -45,43 +49,47 @@ router.get('/:id', async (req, res) => {
     }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     const { error } = validate(req.body);
     if (error) return res.status(400).send(error.details[0].message)
 
-    const user = await Player.findOne({ name: req.body.name })
-    if (user) return res.status(400).send('User already exists')
+    let player = await Player.findOne({ email: req.body.email })
+    if (player) return res.status(400).send('Player already registered.')
 
     const gamesArray = [];
     const games = req.body.games_id;
 
     games.forEach( async (item, index) => { 
         try {
-
             let isIdExist = await Game.findById(item)
-            if (isIdExist) gamesArray.push(isIdExist._id)
-
+            if (isIdExist) {
+                gamesArray.push(isIdExist._id)
+            } else {
+                res.status(404).send("The game with the given ID: '" + games + "' was not found")
+                debug("The game with the given ID: '" + games + "' was not found")
+            }
+            
             if (games.length === gamesArray.length) {
-                
-                let player = new Player({
-                    name: req.body.name,
-                    age: req.body.age,
-                    gender: req.body.gender,
-                    games_id: gamesArray
-                })
+                player = new Player(_.pick(req.body, ['name', 'email', 'password', 'age', 'gender', 'games_id']));
 
-                player = await player.save();
-                res.send(player);
+                const salt = await bcrypt.genSalt(10); 
+                player.password = await bcrypt.hash(player.password, salt)
+
+                await player.save();
+
+                const token = player.generateAuthToken(); 
+                res.header('x-auth-token', token).send( _.pick(player, ['_id', 'name', 'email', 'age', 'gender', 'games_id']));
+                
                 debug('(POST) Create new player')
             }
         } catch (error) {
-            debug(error.message)
+            debug("Error:",  error.message)
             res.status(404).send("The game with the given ID was not found")
         }
     })
 })
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
     const { error } = validate(req.body);
     if (error) return res.status(400).send(error.details[0].message);
 
@@ -92,8 +100,6 @@ router.put('/:id', async (req, res) => {
     games.forEach(async (item, index) => {
         try {
             try {
-                // catch działa tylko jeśli jest za mało lub za dużo znaków w stringu z ID
-                // Jeżeli tylko zmienimy jakiś znak postman się kręci jakby ciągle coś szukał bez wyrzucenia  błędu
                 let isIdExist = await Game.findById(item)
                 if (isIdExist) gamesArray.push(isIdExist._id)
             } catch (error) {
@@ -101,12 +107,7 @@ router.put('/:id', async (req, res) => {
             }
 
             if (games.length === gamesArray.length) {
-                const player = await Player.findByIdAndUpdate(req.params.id, {
-                    name: req.body.name,
-                    age: req.body.age,
-                    gender: req.body.gender,
-                    games_id: gamesArray
-                }, { new: true });
+                const player = await Player.findByIdAndUpdate(req.params.id, _.pick(req.body, ['name', 'email', 'age', 'gender', 'games_id']), { new: true });
 
                 res.send(player);
                 debug('(PUT) Update "' + player.name + '" player')
@@ -119,7 +120,7 @@ router.put('/:id', async (req, res) => {
     })
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
     try {
         const player = await Player.findByIdAndRemove(req.params.id);
 
