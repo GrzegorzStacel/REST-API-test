@@ -1,6 +1,6 @@
 require('dotenv').config(); 
 const debug = require('debug')('routesGames');
-const auth = require('../middleware/auth')
+const authHandler = require('../middleware/authHandler')
 const { Game, validate } = require('../models/game');
 const { Developer } = require('../models/developer')
 const express = require('express');
@@ -40,7 +40,7 @@ router.get('/:id', async (req, res) => {
     }
 })
 
-router.post('/', auth, async (req, res) => {
+router.post('/', authHandler, async (req, res) => {
     const { error } = validate(req.body)
     if (error) {
         debug("(POST) validate:", error.message)
@@ -77,7 +77,7 @@ router.post('/', auth, async (req, res) => {
     }
 })
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authHandler, async (req, res) => {
     const { error } = validate(req.body)
     if (error) {
         debug("(PUT)", error.message)
@@ -112,7 +112,7 @@ router.put('/:id', async (req, res) => {
     }
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authHandler, async (req, res) => {
     try {
         const gameToRemove = await Game.findById(req.params.id)
         const game = await Game.findByIdAndDelete(req.params.id);

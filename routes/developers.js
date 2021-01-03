@@ -1,5 +1,6 @@
 require('dotenv').config(); 
-const auth = require('../middleware/auth')
+const _ = require('lodash')
+const authHandler = require('../middleware/authHandler')
 const debug = require('debug')('routesDevelopers');
 const { Developer, validate } = require('../models/developer')
 const express = require('express');
@@ -34,20 +35,15 @@ router.get('/:id', async (req, res) => {
     }
 })
 
-// router.post('/', auth, async (req, res) => {
-router.post('/', async (req, res) => {
+router.post('/', authHandler, async (req, res) => {
     const { error } = validate(req.body)
     if (error) {
         debug("(POST) validate:", error.message)
         return res.status(400).send(error.details[0].message)
     }
+
     try {
-        let developer = new Developer({
-            name: req.body.name,
-            dateOfSubmission: req.body.dateOfSubmission,
-            country: req.body.country,
-            developer_id: req.body.developer_id
-        })
+        let developer = new Developer(_.pick(req.body, ["name", "dateOfSubmission", "country"]))
 
         developer = await developer.save();
         res.send(developer);
@@ -57,7 +53,7 @@ router.post('/', async (req, res) => {
     }
 })
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authHandler, async (req, res) => {
     const { error } = validate(req.body)
     if (error) {
         debug("(PUT) validate:", error.message)
@@ -65,12 +61,7 @@ router.put('/:id', async (req, res) => {
     }
 
     try {
-        const developer = await Developer.findByIdAndUpdate(req.params.id,
-            {
-                name: req.body.name,
-                dateOfSubmission: req.body.dateOfSubmission,
-                country: req.body.contry
-            }, { new: true });
+        const developer = await Developer.findByIdAndUpdate(req.params.id, _.pick(req.body, ['name', 'dateOfSubmission', 'country']), { new: true });
         
         res.send(developer)
     } catch (error) {
@@ -79,7 +70,7 @@ router.put('/:id', async (req, res) => {
     }
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authHandler, async (req, res) => {
     const { error } = validate(req.body)
     if (error) {
         debug("(DELETE) validate:", error.message)
