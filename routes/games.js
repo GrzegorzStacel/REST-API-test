@@ -2,7 +2,8 @@ require('dotenv').config();
 const debug = require('debug')('routesGames');
 const authHandler = require('../middleware/authHandler')
 const { Game, validate } = require('../models/game');
-const { Developer } = require('../models/developer')
+const { Developer } = require('../models/developer');
+const admin = require("../middleware/admin");
 const express = require('express');
 const router = express.Router();
 
@@ -112,7 +113,7 @@ router.put('/:id', authHandler, async (req, res) => {
     }
 })
 
-router.delete('/:id', authHandler, async (req, res) => {
+router.delete('/:id', [authHandler, admin], async (req, res) => {
     try {
         const gameToRemove = await Game.findById(req.params.id)
         const game = await Game.findByIdAndDelete(req.params.id);
