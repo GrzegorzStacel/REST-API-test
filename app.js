@@ -30,7 +30,7 @@ app.use('/api/users', users);
 app.use('/api/auth', auth);
 
 
-// Configuration
+// Configuration - wyświetli inne dane w zależnoći od ustawienia w zmiennej NODE_ENV wartości production lub development (zmienne znajdują się w pliku .env (używam tego pliku ponieważ mój komp nie che tworzyć zmiennych środowiskowych z terminala...))
 // debug('Application Name: ' + config.get('name'));
 // debug('Mail server: ' + config.get('mail.host'));
 // debug('mail password: ' + config.get('mail.password'));
