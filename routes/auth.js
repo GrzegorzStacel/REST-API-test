@@ -3,6 +3,7 @@ const config = require("config");
 const _ = require('lodash');
 const bcrypt = require('bcrypt');
 const { User } = require('../models/user');
+const { Player } = require('../models/player');
 const debug = require('debug')('routesUsers');
 const express = require('express');
 const Joi = require('joi');
