@@ -1,12 +1,18 @@
+const auth = require('../middleware/authHandler')
 require('dotenv').config(); 
-// const config = require('config');
 const _ = require('lodash');
 const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
 const { User, validate } = require('../models/user')
 const debug = require('debug')('routesUsers');
 const express = require('express');
 const router = express.Router();
+
+router.get('/me', auth, async (req, res) => {
+    const user = await User
+        .findById(req.user._id)
+
+    res.send(_.pick(user, ['name', 'email']))
+})
 
 router.post('/', async (req, res) => {
     const { error } = validate(req.body);
