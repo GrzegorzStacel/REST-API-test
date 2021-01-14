@@ -2,5 +2,6 @@
     "name": "Development",
     "mail": {
         "host": "dev-mail-server"
-    }
+    },
+    "db": "mongodb://localhost/testing"
 }

@@ -8,10 +8,10 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/me', auth, async (req, res) => {
-    const user = await User
-        .findById(req.user._id)
-
-    res.send(_.pick(user, ['name', 'email']))
+        const user = await User
+            .findById(req.user._id)
+    
+        res.send(_.pick(user, ['name', 'email']))
 })
 
 router.post('/', async (req, res) => {

@@ -1,40 +1,38 @@
-require('dotenv').config();
-const config = require("config");
+
+const winston = require('winston')
 const debug = require('debug')('App');
-const Joi = require('joi');
-Joi.obiectId = require('joi-objectid')(Joi);
-const players = require('./routes/players');
-const games = require('./routes/games');
-const developers = require('./routes/developers');
-const users = require('./routes/users');
-const auth = require('./routes/auth');
-const mongoose = require('mongoose');
 const express = require('express');
 const app = express();
 
-if (!config.get('jwtPrivateKey')) {
-    console.error('FATAL ERROR: jwtPrivateKey is not defined.');
-    process.exit(1);
-}
+require('./startup/logging')();
+require('./startup/routes')(app);
+require('./startup/db')();
+require('./startup/config')();
+require('./startup/validation')();
 
-const mongoDB = "mongodb://localhost/testing";
-mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true})
-    .then(() => debug('Connected to MongoDB...'))
-    .catch((err) => debug('Could not connect to MongoDB...', err))
-   
-app.use(express.json());
-app.use('/api/players', players);
-app.use('/api/games', games);
-app.use('/api/developers', developers);
-app.use('/api/users', users);
-app.use('/api/auth', auth);
+// ****** Testing errors *****
+// throw new Error('Something failed during startup');
+
+// const p = Promise.reject(new Error('Something failed miserably!'));
+// p.then(() => console.log("Done"))
+
+// WYłączenie i włączenie MongoDB z poziomu konsoli cmd*
+// net start|stop mongodb
+// *w celu przetestowania błędu "500 Internal Server Error"
+
+// ****** END ******
 
 
-// Configuration - wyświetli inne dane w zależnoći od ustawienia w zmiennej NODE_ENV wartości production lub development (zmienne znajdują się w pliku .env (używam tego pliku ponieważ mój komp nie che tworzyć zmiennych środowiskowych z terminala...))
+const port = process.env.PORT || 3000;
+app.listen(port, () => winston.info(`Listening on port ${port}...`));
+
+
+
+// ****** Configuration ******
+
+// Wyświetli inne dane w zależnoći od ustawienia w zmiennej NODE_ENV wartości production lub development (zmienne znajdują się w pliku .env (używam tego pliku ponieważ mój komp nie che tworzyć zmiennych środowiskowych z terminala...))
 // debug('Application Name: ' + config.get('name'));
 // debug('Mail server: ' + config.get('mail.host'));
 // debug('mail password: ' + config.get('mail.password'));
 
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => debug(`Listening on port ${port}...`));
+// ****** END ******

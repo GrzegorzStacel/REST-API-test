@@ -8,26 +8,26 @@ const bcrypt = require('bcrypt');
 const express = require('express');
 const router = express.Router();
 
-// router.get('/', async (req, res) => {
-//     const players = await Player
-//         .find()
-//         .sort("name")
-//         .select('-_id -__v -password')
-//         .populate({
-//             path: "games_id",
-//             select: "-_id -__v",
-//             populate: {
-//                 path: "developer_id",
-//                 select: "-_id -__v"
-//             }
-//         })
+router.get('/', async (req, res) => {
+    // throw new Error('Could not get the players')
+    const players = await Player
+        .find()
+        .sort("name")
+        .select('-_id -__v -password')
+        .populate({
+            path: "games_id",
+            select: "-_id -__v",
+            populate: {
+                path: "developer_id",
+                select: "-_id -__v"
+            }
+        })
     
-//     res.send(players)
-//     debug('(GET) Show all players')
-// })
-
+    res.send(players)
+    debug('(GET) Show all players')
+})
+        
 router.get('/myAccount', authHandler, async (req, res) => {
-    try {
         const player = await Player
             .findById(req.player._id)
             .select('-_id -__v -password')
@@ -41,11 +41,6 @@ router.get('/myAccount', authHandler, async (req, res) => {
             });
         res.send(player)
         debug('(GET) Show specific player')
-        
-    } catch (error) {
-        res.status(404).send("The player with the given ID was not found")
-        debug('(GET) Show specific player:', error.message)
-    }
 })
 
 router.post('/', async (req, res) => {
@@ -89,6 +84,7 @@ router.post('/', async (req, res) => {
 })
 
 router.put('/myAccount', authHandler, async (req, res) => {
+    debug('here')
     const { error } = validate(req.body);
     if (error) return res.status(400).send(error.details[0].message);
 
@@ -129,6 +125,8 @@ router.delete('/myAccount', authHandler, async (req, res) => {
     try {
         const player = await Player.findByIdAndRemove(req.player._id);
 
+        // if (!player) return res.send("Player doesn't exist")
+        
         res.send(player)
         debug('(DELETE) Delete player', player)
     } catch (error) {
