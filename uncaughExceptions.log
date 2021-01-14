@@ -1,0 +1,52 @@
+2021-01-14T11:21:12.716Z error: uncaughtException: Something failed during startup
+Error: Something failed during startup
+    at Object.<anonymous> (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\app.js:14:7)
+    at Module._compile (internal/modules/cjs/loader.js:1063:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1092:10)
+    at Module.load (internal/modules/cjs/loader.js:928:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:769:14)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:72:12)
+    at internal/main/run_main_module.js:17:47 - Error: Something failed during startup
+    at Object.<anonymous> (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\app.js:14:7)
+    at Module._compile (internal/modules/cjs/loader.js:1063:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1092:10)
+    at Module.load (internal/modules/cjs/loader.js:928:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:769:14)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:72:12)
+    at internal/main/run_main_module.js:17:47
+2021-01-14T11:21:23.629Z error: uncaughtException: Something failed miserably!
+Error: Something failed miserably!
+    at Object.<anonymous> (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\app.js:16:26)
+    at Module._compile (internal/modules/cjs/loader.js:1063:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1092:10)
+    at Module.load (internal/modules/cjs/loader.js:928:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:769:14)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:72:12)
+    at internal/main/run_main_module.js:17:47 - Error: Something failed miserably!
+    at Object.<anonymous> (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\app.js:16:26)
+    at Module._compile (internal/modules/cjs/loader.js:1063:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1092:10)
+    at Module.load (internal/modules/cjs/loader.js:928:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:769:14)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:72:12)
+    at internal/main/run_main_module.js:17:47
+2021-01-14T11:21:47.261Z error: uncaughtException: Configuration property "jwtPrivateKe" is not defined
+Error: Configuration property "jwtPrivateKe" is not defined
+    at Config.get (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\node_modules\config\lib\config.js:182:11)
+    at module.exports (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\startup\config.js:5:17)
+    at Object.<anonymous> (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\app.js:10:28)
+    at Module._compile (internal/modules/cjs/loader.js:1063:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1092:10)
+    at Module.load (internal/modules/cjs/loader.js:928:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:769:14)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:72:12)
+    at internal/main/run_main_module.js:17:47 - Error: Configuration property "jwtPrivateKe" is not defined
+    at Config.get (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\node_modules\config\lib\config.js:182:11)
+    at module.exports (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\startup\config.js:5:17)
+    at Object.<anonymous> (F:\Kursy DEV\Node.js + RESTAPI + MongoDB\MyProject_complete\app.js:10:28)
+    at Module._compile (internal/modules/cjs/loader.js:1063:30)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1092:10)
+    at Module.load (internal/modules/cjs/loader.js:928:32)
+    at Function.Module._load (internal/modules/cjs/loader.js:769:14)
+    at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:72:12)
+    at internal/main/run_main_module.js:17:47
