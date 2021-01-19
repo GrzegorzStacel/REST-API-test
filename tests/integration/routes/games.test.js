@@ -76,7 +76,7 @@ describe('/api/games', () => {
                 .post('/api/games')
                 .set('x-auth-token', token)
                 .send({
-                    name: name,   // name: name === name
+                    name,   // name: name === name
                     species: "RTS",
                     developer_id: developer._id
                 });
@@ -241,6 +241,83 @@ describe('/api/games', () => {
 
             expect(res.body).toHaveProperty("_id");
             expect(res.body).toHaveProperty("name", newName);
+        });
+    });
+
+    describe('DELETE /:id', () => {
+        let token;
+        let game;
+        let id;
+
+        const exec = async () => {
+            return await request(server)
+                .delete('/api/games/' + id)
+                .set('x-auth-token', token)
+                .send();
+        };
+
+        beforeEach(async () => {
+            // Before each test we need to create a genre and 
+            // put it in the database.  
+
+            game = new Game({
+                name: 'game1',
+                species: "RTS",
+                developer_id: "6007459fc4ff953d8032b47f"
+            });
+            await game.save();
+              
+            id = game._id; 
+            token = new Player({ isAdmin: true }).generateAuthToken();     
+        })
+
+        it('should return 401 if client is not logged in', async () => {
+            token = "";
+
+            const res = await exec();
+
+            expect(res.status).toBe(401);
+        });
+
+        it('should return 403 if the user is not an admin', async () => {
+            token = new Player({ isAdmin: false }).generateAuthToken();
+
+            const res = await exec();
+
+            expect(res.status).toBe(403);
+        });
+
+        it('should return 404 if id is invalid', async () => {
+            id = 1;
+
+            const res = await exec();
+
+            // console.log(res.error.text);
+
+            expect(res.status).toBe(404);
+        });
+
+        it('should return 404 if no game with the given id was found', async () => {
+            id = mongoose.Types.ObjectId();
+
+            const res = await exec();
+
+            expect(res.status).toBe(404);
+        });
+
+        it('should delete the genre if input is valid', async () => {
+            await exec();
+
+            const gameInDb = await Game.findById(id);
+
+            expect(gameInDb).toBeNull();
+        });
+
+        it('should return the removed game', async () => {
+            const res = await exec();
+            console.log(game._id, game.name);
+            expect(res.body).toHaveProperty('_id', game._id.toHexString());
+            expect(res.body).toHaveProperty('name', game.name)
         });
     });
 });
