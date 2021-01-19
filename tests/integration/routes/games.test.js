@@ -139,4 +139,108 @@ describe('/api/games', () => {
             expect(res.body).toHaveProperty('developer_id', `${developer._id}`);
         });
     });
+
+    describe('PUT /:id', () => {
+        let token; 
+        let newName; 
+        let game; 
+        let id; 
+        let developer; 
+
+        const exec = async () => {
+            return await request(server)
+              .put('/api/games/' + id)
+              .set('x-auth-token', token)
+                .send({
+                    name: newName,
+                    species: 'rts',
+                    developer_id: developer._id
+                });
+          }
+      
+          beforeEach(async () => {
+            // Before each test we need to create a game and 
+            // put it in the database.      
+            developer = new Developer({
+                name: "developer1",
+                dateOfSubmission: Date.now(),
+                country: 'Poland'
+            });
+            await developer.save();
+
+            game = new Game({
+                name: 'game1',
+                species: "RTS",
+                developer_id: developer._id
+            });
+            await game.save();
+              
+            token = new Player().generateAuthToken();     
+            id = game._id; 
+            newName = 'updatedName'; 
+          })
+        
+        it('should return 401 if client is not logged in', async () => {
+            token = "";
+
+            const res = await exec();
+
+            expect(res.status).toBe(401);
+        });
+
+        it('should return 400 if game is less than 2 characters', async () => {
+            newName = '1';
+
+            const res = await exec();
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should return 400 if game is more than 255 characters', async () => {
+            newName = new Array(260).join('a');
+
+            const res = await exec();
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should return 404 if id is invalid', async () => {
+            id = 1;
+
+            const res = await exec();
+
+            expect(res.status).toBe(404);
+        });
+
+        it('should return 404 if game with the given id was not found', async () => {
+            id = mongoose.Types.ObjectId();
+
+            const res = await exec();
+            
+            expect(res.status).toBe(404);
+        });
+
+        it('should return 404 if Developer with the given id was not found', async () => {
+            developer._id = mongoose.Types.ObjectId();
+
+            const res = await exec();
+            
+            expect(res.status).toBe(404);
+        });
+
+        it('should update the game if input is valid', async () => {
+            await exec();
+
+            const updateGame = await Game.findById(game._id);
+
+            expect(updateGame.name).toBe(newName);
+        });
+
+        it('should return the updated game if it is valid', async () => {
+            const res = await exec();
+
+            expect(res.body).toHaveProperty("_id");
+            expect(res.body).toHaveProperty("name", newName);
+        });
+    });
 });
