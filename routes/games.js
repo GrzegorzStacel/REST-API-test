@@ -19,16 +19,6 @@ router.get('/', async (req, res) => {
     res.send(games);
 })
 
-router.get('/sort/:value', async (req, res) => {
-    const games = await Game
-        .find()
-        .select('-_id -__v')
-        .populate('developerInfo', 'name country -_id')
-        .sort(req.params.value);
-    
-    res.send(games);
-})
-
 router.get('/:id', validateObjectId, async (req, res) => {
     const game = await Game
         .findById(req.params.id)
@@ -43,11 +33,8 @@ router.get('/:id', validateObjectId, async (req, res) => {
 
 router.post('/', authHandler, async (req, res) => {
     const { error } = validate(req.body)
-    if (error) {
-        // winston.error("(POST) validate:", error)
-        return res.status(400).send(error.details[0].message)
-    }
-    debug("post developer id:", req.body.developer_id)
+    if (error) return res.status(400).send(error.details[0].message)
+    
 
     let developer;
 
@@ -69,51 +56,35 @@ router.post('/', authHandler, async (req, res) => {
     res.send(game);
 })
 
-router.put('/:id', authHandler, async (req, res) => {
+router.put('/:id', [authHandler, validateObjectId], async (req, res) => {
     const { error } = validate(req.body)
-    if (error) {
-        debug("(PUT)", error.message)
-        return res.status(400).send(error.details[0].message)
-    }
-
-    let developer;
-    try {
-        developer = await Developer.findById(req.body.developerID)
-    } catch (err) {
-        res.status(400).send("The Developer with the given ID was not found")
-        debug("(PUT) developerID:", err.message)  
-    }
-
-    try {
+    if (error) return res.status(400).send(error.details[0].message)
+  
+    const developer = await Developer.findById(req.body.developer_id)
+    if (!developer) return res.status(404).send("The Developer with the given ID was not found")
+    
+    const game = await Game.findByIdAndUpdate(req.params.id,
+        {
+            name: req.body.name,
+            species: req.body.species,
+            premiere: req.body.premiere,
+            developer: {
+                _id: developer._id,
+                country: developer.country
+            }
+        }, { new: true })
         
-        const game = await Game.findByIdAndUpdate(req.params.id,
-            {
-                name: req.body.name,
-                species: req.body.species,
-                premiere: req.body.premiere,
-                developer: {
-                    _id: developer._id,
-                    country: developer.country
-                }
-            }, { new: true })
-        
-        res.send(game);
-    } catch (error) {
-        res.status(404).send('The game with the given ID was not found.');
-        debug("(PUT) findByIdAndUpdate:", error.message)
-    }
+    if (!game) return res.status(404).send('The game with the given ID was not found.');
+    
+    res.send(game);
 })
 
-router.delete('/:id', [authHandler, admin], async (req, res) => {
-    try {
-        const gameToRemove = await Game.findById(req.params.id)
-        const game = await Game.findByIdAndDelete(req.params.id);
-        debug('(DELETE) The proces is complete:', gameToRemove.name, "- was deleted")
-        res.send(game);
-    } catch (error) {        
-        debug('(DELETE) findByIdAndDelete', error.message)
-        res.status(404).send("The game with the given ID was not found.");
-    }
+router.delete('/:id', [authHandler, admin, validateObjectId], async (req, res) => {
+    const game = await Game.findByIdAndDelete(req.params.id);
+    
+    if(!game) return res.status(404).send("The game with the given ID was not found.");
+
+    res.send(game);
 })
 
 
@@ -122,49 +93,57 @@ module.exports = router;
 
 
 
-
+// router.get('/sort/:value', async (req, res) => {
+//     const games = await Game
+//         .find()
+//         .select('-_id -__v')
+//         .populate('developerInfo', 'name country -_id')
+//         .sort(req.params.value);
+    
+//     res.send(games);
+// })
 
 
 
 
 // Manually added games
 
-async function createGame(name, species, premiere, developerInfo) {
-    const game = new Game({
-        name,
-        species,
-        premiere,
-        developerInfo
-    })
+// async function createGame(name, species, premiere, developerInfo) {
+//     const game = new Game({
+//         name,
+//         species,
+//         premiere,
+//         developerInfo
+//     })
 
-    const result = await game.save();
-    debug(result)
-}
+//     const result = await game.save();
+//     debug(result)
+// }
 // createGame("Gothic", "RPG", "2001-10-20", "5fdc9739a3e10357047fd060")
 // createGame("Fifa 2016", "Sport", "2015-05-10", "5fdc67ae03e20c0948ebfe1e")
 // createGame("Cyberpunk 2077", "RPG", "2020-12-08", "5fdc971c44cc385478c30f59")
 // createGame("Battlefield 3", "FPS", "2010-01-14", "5fdc971c44cc385478c30f5b")
 // createGame("Gothic", "RPG") // Date = default
 
-async function listGames() {
-    const games = await Game
-        .find()
-        .populate('developerInfo', 'name -_id')
-        .select('name premiere -_id')
-        .sort('premiere');
+// async function listGames() {
+//     const games = await Game
+//         .find()
+//         .populate('developerInfo', 'name -_id')
+//         .select('name premiere -_id')
+//         .sort('premiere');
 
-    debug(games)
-}
+//     debug(games)
+// }
 // listGames()
 
 
-async function updateGame(gameID) {
-    const game = await Game.findById(gameID);
-    debug("before:", game.name)
+// async function updateGame(gameID) {
+//     const game = await Game.findById(gameID);
+//     debug("before:", game.name)
 
-    game.name = "Gothic 1"
+//     game.name = "Gothic 1"
 
-    game.save();
-    debug("after:", game.name)
-}
+//     game.save();
+//     debug("after:", game.name)
+// }
 // updateGame("5fdca157fd683e565c707885")
