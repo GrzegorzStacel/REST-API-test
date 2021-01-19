@@ -14,6 +14,8 @@ const gameSchema = new mongoose.Schema({
     species: {
         type: String,
         required: true,
+        minlength: 3,
+        maxlength: 255
     },
     premiere: {
         type: Date,
@@ -21,7 +23,8 @@ const gameSchema = new mongoose.Schema({
     },
     developer_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Developer'
+        ref: 'Developer',
+        required: true
     }
 })
 
@@ -29,9 +32,9 @@ const Game = mongoose.model('Game', gameSchema);
 
 function validateGame(game) {
     const schema = Joi.object({
-        name: Joi.string().min(2).max(200).required(),
-        species: Joi.string().min(3).max(200).required(),
-        premiere: Joi.date().required(),
+        name: Joi.string().min(2).max(255).required(),
+        species: Joi.string().min(3).max(255).required(),
+        premiere: Joi.date(),
         developer_id: Joi.ObjectId().required()
     });
 

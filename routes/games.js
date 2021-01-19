@@ -1,3 +1,5 @@
+const validateObjectId = require('../middleware/validateObjectId');
+const winston = require('winston');
 require('dotenv').config(); 
 const debug = require('debug')('routesGames');
 const authHandler = require('../middleware/authHandler')
@@ -5,6 +7,7 @@ const { Game, validate } = require('../models/game');
 const { Developer } = require('../models/developer');
 const admin = require("../middleware/admin");
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -26,56 +29,44 @@ router.get('/sort/:value', async (req, res) => {
     res.send(games);
 })
 
-router.get('/:id', async (req, res) => {
-    try {
-        const game = await Game
-            .findById(req.params.id)
-            .select('-_id -__v')
-            .populate('developerInfo', 'name country -_id')
-        res.send(game)
-        debug('(GET) Show specific game')
-        
-    } catch (error) {
-        res.status(404).send("The game with the given ID was not found")
-        debug('(GET) Show specific game:', error.message)
-    }
+router.get('/:id', validateObjectId, async (req, res) => {
+    const game = await Game
+        .findById(req.params.id)
+        .select('-_id -__v')
+        .populate('developerInfo', 'name country -_id')
+    
+    if(!game) return res.status(404).send('The game with the given ID was not found.')
+    
+    res.send(game)
+    debug('(GET) Show specific game')
 })
 
 router.post('/', authHandler, async (req, res) => {
     const { error } = validate(req.body)
     if (error) {
-        debug("(POST) validate:", error.message)
+        // winston.error("(POST) validate:", error)
         return res.status(400).send(error.details[0].message)
     }
     debug("post developer id:", req.body.developer_id)
 
     let developer;
-    try {
-        developer = await Developer.findById(req.body.developer_id)
-        debug('developer:', developer)
-    } catch (err) {
-        res.status(400).send("The Developer with the given ID was not found")
-        debug("(POST) developerID:", err.message)  
-    }
 
-    try {
-        let game = new Game({
-            name: req.body.name,
-            species: req.body.species,
-            premiere: req.body.premiere,
-            developer_id: {
-                _id: developer._id,
-                name: developer.name,
-                country: developer.country
-            }
-        })
+    developer = await Developer.findById(req.body.developer_id)
+    debug('developer:', developer)
 
-        game = await game.save();
-        res.send(game);
+    let game = new Game({
+        name: req.body.name,
+        species: req.body.species,
+        premiere: req.body.premiere,
+        developer_id: {
+            _id: developer._id,
+            name: developer.name,
+            country: developer.country
+        }
+    })
 
-    } catch (error) {
-        debug("(POST) save:", error.message)
-    }
+    game = await game.save();
+    res.send(game);
 })
 
 router.put('/:id', authHandler, async (req, res) => {

@@ -44,7 +44,6 @@ module.exports = function () {
                 level: 'info',
                 storeHost: true,
                 capped: true,
-                // handleExceptions: true,
             })
         ],
         exceptionHandlers: [

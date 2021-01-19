@@ -4,7 +4,8 @@ require('dotenv').config();
 const config = require("config");
 
 module.exports = function () {
-    mongoose.connect(config.get('db'), {
+    const db = config.get('db');
+    mongoose.connect(db, {
         useNewUrlParser: true,
         useFindAndModify: false,
         useCreateIndex: true,
@@ -12,6 +13,6 @@ module.exports = function () {
     })
         .then(() => winston.info({
             level: 'info',
-            message: 'Connected to MongoDB...'
+            message: `Connected to ${db}...`
         }))
 }

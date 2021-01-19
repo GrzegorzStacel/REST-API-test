@@ -26,7 +26,7 @@ const Developer = mongoose.model('Developer', developerSchema);
 
 function validateDeveloper(developer) {
     const schema = Joi.object({
-        name: Joi.string().min(2).max(200).required(),
+        name: Joi.string().min(2).max(255).required(),
         dateOfSubmission: Joi.date().required(),
         country: Joi.string().required()
     });
