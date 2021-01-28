@@ -1,8 +1,11 @@
 require('dotenv').config(); 
 const _ = require('lodash')
 const authHandler = require('../middleware/authHandler')
+const validateObjectId = require('../middleware/validateObjectId')
+const admin = require('../middleware/admin')
 const debug = require('debug')('routesDevelopers');
 const { Developer, validate } = require('../models/developer')
+const validator = require('../middleware/validate')(validate)
 const express = require('express');
 const router = express.Router();
 
@@ -23,70 +26,40 @@ router.get('/sort/:value', async (req, res) => {
     res.send(developer);
 })
 
-router.get('/:id', async (req, res) => {
-    try {
-        const developer = await Developer.findById(req.params.id);
-        res.send(developer)
-        debug('(GET) Show specific developer')
+router.get('/:id', validateObjectId, async (req, res) => {
+    // try {
+    const developer = await Developer.findById(req.params.id);
+    if(!developer) return res.status(404).send("The developer with the given ID was not found.");
+
+    res.send(developer)
         
-    } catch (error) {
-        res.status(404).send("The developer with the given ID was not found")
-        debug('(GET) Show specific developer:', error.message)
-    }
+    // } catch (error) {
+    //     res.status(404).send("The developer with the given ID was not found")
+    //     debug('(GET) Show specific developer:', error.message)
+    // }
 })
 
-router.post('/', authHandler, async (req, res) => {
-    const { error } = validate(req.body)
-    if (error) {
-        debug("(POST) validate:", error.message)
-        return res.status(400).send(error.details[0].message)
-    }
-
-    try {
+router.post('/', [authHandler, validator], async (req, res) => {
         let developer = new Developer(_.pick(req.body, ["name", "dateOfSubmission", "country"]))
 
         developer = await developer.save();
         res.send(developer);
-
-    } catch (error) {
-        debug("(POST) save:", error.message)
-    }
 })
 
-router.put('/:id', authHandler, async (req, res) => {
-    const { error } = validate(req.body)
-    if (error) {
-        debug("(PUT) validate:", error.message)
-        return res.status(400).send(error.details[0].message)
-    }
-
-    try {
-        const developer = await Developer.findByIdAndUpdate(req.params.id, _.pick(req.body, ['name', 'dateOfSubmission', 'country']), { new: true });
+router.put('/:id', [authHandler, validateObjectId, validator], async (req, res) => {
+    const developer = await Developer.findByIdAndUpdate(req.params.id, _.pick(req.body, ['name', 'dateOfSubmission', 'country']), { new: true });
+    if(!developer) return res.status(404).send("The game with the given ID was not found.");
         
-        res.send(developer)
-    } catch (error) {
-        debug("(PUT) findByIdAndUpdate:", error.message)
-        res.status(400).send("The Developer with the given ID was not found")
-    }
+    res.send(developer)
 })
 
-router.delete('/:id', authHandler, async (req, res) => {
-    const { error } = validate(req.body)
-    if (error) {
-        debug("(DELETE) validate:", error.message)
-        return res.status(400).send(error.details[0].message)
-    }
-
-    try {
-        const developer = await Developer.findByIdAndDelete(req.params.id)
+router.delete('/:id', [authHandler, admin, validateObjectId], async (req, res) => {
+    const developer = await Developer.findByIdAndDelete(req.params.id)
      
-        res.send(developer)
-    } catch (error) {
-        debug("(DELETE) findByIdAndDelete:", error.message)
-        res.status(400).send("The Developer with the given ID was not found")
-    }
+    if (!developer) return res.status(404).send("The Developer with the given ID was not found")
+    
+    res.send(developer);
 })
-
 
 module.exports = router;
 
@@ -95,16 +68,16 @@ module.exports = router;
 
 
 // Manually added developers
-async function createDeveloper(name, dateOfSubmission, country) {
-    const dev = new Developer({
-        name,
-        dateOfSubmission,
-        country
-    })
+// async function createDeveloper(name, dateOfSubmission, country) {
+//     const dev = new Developer({
+//         name,
+//         dateOfSubmission,
+//         country
+//     })
 
-    const result = await dev.save();
-    debug(result);
-}
+//     const result = await dev.save();
+//     debug(result);
+// }
 
 // createDeveloper("UbiSoft", "2003-01-20", "British")
 // createDeveloper("CD Projekt", "2006-03-11", "Polish")

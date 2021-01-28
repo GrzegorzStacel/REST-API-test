@@ -9,6 +9,7 @@ require('./startup/routes')(app);
 require('./startup/db')();
 require('./startup/config')();
 require('./startup/validation')();
+require('./startup/prod')(app);
 
 // ****** Testing errors *****
 // throw new Error('Something failed during startup');
@@ -21,7 +22,6 @@ require('./startup/validation')();
 // *w celu przetestowania błędu "500 Internal Server Error"
 
 // ****** END ******
-
 
 const port = process.env.PORT || 3000;
 const server = app.listen(port, () => winston.info(`Listening on port ${port}...`));

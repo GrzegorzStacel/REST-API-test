@@ -12,7 +12,7 @@ const playerSchema = new mongoose.Schema({
         type: String,
         required: true,
         minlength: 2,
-        maxlength: 20
+        maxlength: 40
     },
     email: {
         type: String,
@@ -37,12 +37,18 @@ const playerSchema = new mongoose.Schema({
         type: String,
         required: true,
         min: 1,
-        max: 1
+        max: 1,
+        upperCase: true
     },
     games_id: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Game"
+        }
+    ],
+    addInformation: [
+        {
+            type: mongoose.Schema.Types.ObjectId
         }
     ],
     isAdmin: Boolean
@@ -57,11 +63,11 @@ const Player = mongoose.model('Player', playerSchema);
 
 function validatePlayer(player) {
     const schema = Joi.object ({
-        name: Joi.string().min(2).max(20).required(),
+        name: Joi.string().min(2).max(40).required(),
         email: Joi.string().min(5).max(255).email().required(),
         password: new PasswordComplexity({
             min: 5,
-            max: 255,
+            max: 1024,
             lowerCase: 1,
             upperCase: 1,
             numeric: 1,
@@ -69,7 +75,7 @@ function validatePlayer(player) {
             requirementCount: 0
           }).required(),
         age: Joi.number().min(5).max(110).required(),
-        gender: Joi.string().min(1).max(1).required(),
+        gender: Joi.string().min(1).max(1).required().uppercase(),
         games_id: Joi.array().items(Joi.ObjectId()).required()
     })
 
