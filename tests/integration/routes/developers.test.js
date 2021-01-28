@@ -1,62 +1,94 @@
 const request = require('supertest');
-const { Game } = require('../../../models/game');
-const { Player } = require('../../../models/player');
 const { Developer } = require('../../../models/developer');
+const { Player } = require('../../../models/player');
 const mongoose = require('mongoose');
 
-let server;
 
 describe('/api/games', () => {
     beforeEach(() => { server = require('../../../app'); });
     afterEach(async () => {
-        await Game.deleteMany({});
         await Developer.deleteMany({});
         await server.close();
     });
 
     describe('GET /', () => {
-        it('should return all games', async () => {
-            await Game.collection.insertMany([
-                { name: 'game1' },
-                { name: 'game2' }
-            ])
+        it('should return all developers', async() => {
+            await Developer.collection.insertMany([
+                { name: 'dev1' },
+                { name: 'dev2' }
+            ])    
 
-            const res = await request(server).get('/api/games')
+            const res = await request(server).get('/api/developers')
 
             expect(res.status).toBe(200);
             expect(res.body.length).toBe(2);
-            expect(res.body.some(g => g.name === 'game1')).toBeTruthy();
-            expect(res.body.some(g => g.name === 'game2')).toBeTruthy();
+            expect(res.body.some(g => g.name === 'dev1')).toBeTruthy();
+            expect(res.body.some(g => g.name === 'dev2')).toBeTruthy();
+        });
+    });
+    
+    describe('GET /sort/:value', () => {
+        it('should return all developers in descending order of name', async() => {
+            await Developer.collection.insertMany([
+                { name: 'dev1' },
+                { name: 'dev2' }
+            ])    
+
+            const descending = '-name';
+
+            const res = await request(server).get('/api/developers/sort/' + descending)
+
+            const dev1 = res.text.indexOf('dev1');
+            const dev2 = res.text.indexOf('dev2');
+
+            expect(res.status).toBe(200);
+            expect(res.body.length).toBe(2);
+            expect(dev1).toBeGreaterThan(dev2);
+        });
+        
+        it('should return all developers in ascending order of name', async () => {
+            await Developer.collection.insertMany([
+                { name: 'dev1' },
+                { name: 'dev2' }
+            ])    
+
+            const descending = 'name';
+
+            const res = await request(server).get('/api/developers/sort/' + descending)
+
+            const dev1 = res.text.indexOf('dev1');
+            const dev2 = res.text.indexOf('dev2');
+
+            expect(res.status).toBe(200);
+            expect(res.body.length).toBe(2);
+            expect(dev2).toBeGreaterThan(dev1);
         });
     });
 
     describe('GET /:id', () => {
-        let developerId = mongoose.Types.ObjectId();
-        let game;
         let id;
 
         const exec = async () => {
             return await request(server)
-                .get('/api/games/' + id)
+                .get('/api/developers/' + id)
                 .send()
         };
 
         beforeEach(async () => {
-            game = new Game({
-                name: 'game1',
-                species: 'RTS',
-                developer_id: developerId
+            developer = new Developer({
+                name: 'dev1',
+                country: 'test',
             });
-            await game.save();
+            await developer.save();
 
-            id = game._id;
+            id = developer._id;
         })
 
-        it('should return a game if valid id is passed', async () => {
+        it('should return the developer if valid id is passed', async () => {
             const res = await exec();
-
+            
             expect(res.status).toBe(200);
-            expect(res.body).toHaveProperty('name', game.name);
+            expect(res.body).toHaveProperty('name', developer.name);
         });
 
         it('should return 404 if invalid id is passed', async () => {
@@ -77,31 +109,34 @@ describe('/api/games', () => {
     });
 
     describe('POST /', () => {
-
         let token;
         let name;
         let developer;
+        let date;
 
         const exec = async () => {
             return await request(server)
-                .post('/api/games')
+                .post('/api/developers')
                 .set('x-auth-token', token)
                 .send({
-                    name, // name: name === name
-                    species: "RTS",
-                    developer_id: developer._id
+                    name,
+                    dateOfSubmission: date,
+                    country: 'test'
                 });
         }
 
         beforeEach(async () => {
             token = new Player().generateAuthToken();
+
             developer = new Developer({
                 name: "developer1",
-                dateOfSubmission: Date.now(),
-                country: 'Poland'
+                dateOfSubmission: date,
+                country: 'test'
             });
             await developer.save();
-            name = 'game1';
+
+            name = 'dev1';
+            date = Date.now();
         })
 
         it('should return 401 if client is not logged in', async () => {
@@ -112,7 +147,7 @@ describe('/api/games', () => {
             expect(res.status).toBe(401);
         });
 
-        it('should return 400 if game is less than 2 characters', async () => {
+        it('should return 400 if developer is less than 2 characters', async () => {
             name = '1';
 
             const res = await exec();
@@ -120,7 +155,7 @@ describe('/api/games', () => {
             expect(res.status).toBe(400);
         });
 
-        it('should return 400 if game is more than 255 characters', async () => {
+        it('should return 400 if developer is more than 255 characters', async () => {
             name = new Array(260).join('a');
 
             const res = await exec();
@@ -128,67 +163,48 @@ describe('/api/games', () => {
             expect(res.status).toBe(400);
         });
 
-        it('should save the game if it is valid', async () => {
-            name = 'developer1';
-
-            await exec();
-
-            let game = await Game.find({ name: 'developer1' });
-
-            expect(game).not.toEqual([]);
-            expect(game).not.toBeNull();
-        });
-
-        it('should return the game if it is valid', async () => {
+        it('should return the developer if it is valid', async () => {
             name = 'developer1';
 
             const res = await exec();
 
             expect(res.body).toHaveProperty('_id');
             expect(res.body).toHaveProperty('name', 'developer1');
-            expect(res.body).toHaveProperty('species', 'RTS');
-            expect(res.body).toHaveProperty('developer_id', `${developer._id}`);
+            expect(res.body).toHaveProperty('country', `${developer.country}`);
         });
     });
 
     describe('PUT /:id', () => {
         let token;
         let newName;
-        let game;
         let id;
         let developer;
+        let date;
 
         const exec = async () => {
             return await request(server)
-                .put('/api/games/' + id)
+                .put('/api/developers/' + id)
                 .set('x-auth-token', token)
                 .send({
                     name: newName,
-                    species: 'rts',
-                    developer_id: developer._id
+                    dateOfSubmission: date,
+                    country: 'test1'
                 });
         }
 
         beforeEach(async () => {
-            // Before each test we need to create a game and 
-            // put it in the database.      
+            token = new Player().generateAuthToken();
+
             developer = new Developer({
                 name: "developer1",
-                dateOfSubmission: Date.now(),
-                country: 'Poland'
+                dateOfSubmission: date,
+                country: 'test2'
             });
             await developer.save();
 
-            game = new Game({
-                name: 'game1',
-                species: "RTS",
-                developer_id: developer._id
-            });
-            await game.save();
-
-            token = new Player().generateAuthToken();
-            id = game._id;
+            id = developer._id;
             newName = 'updatedName';
+            date = Date.now();
         })
 
         it('should return 401 if client is not logged in', async () => {
@@ -199,7 +215,7 @@ describe('/api/games', () => {
             expect(res.status).toBe(401);
         });
 
-        it('should return 400 if game is less than 2 characters', async () => {
+        it('should return 400 if developer is less than 2 characters', async () => {
             newName = '1';
 
             const res = await exec();
@@ -207,7 +223,7 @@ describe('/api/games', () => {
             expect(res.status).toBe(400);
         });
 
-        it('should return 400 if game is more than 255 characters', async () => {
+        it('should return 400 if developer is more than 255 characters', async () => {
             newName = new Array(260).join('a');
 
             const res = await exec();
@@ -223,7 +239,7 @@ describe('/api/games', () => {
             expect(res.status).toBe(404);
         });
 
-        it('should return 404 if game with the given id was not found', async () => {
+        it('should return 404 if developer with the given id was not found', async () => {
             id = mongoose.Types.ObjectId();
 
             const res = await exec();
@@ -231,18 +247,10 @@ describe('/api/games', () => {
             expect(res.status).toBe(404);
         });
 
-        it('should return 404 if Developer with the given id was not found', async () => {
-            developer._id = mongoose.Types.ObjectId();
-
-            const res = await exec();
-
-            expect(res.status).toBe(404);
-        });
-
-        it('should update the game if input is valid', async () => {
+        it('should update the developer if input is valid', async () => {
             await exec();
 
-            const updateGame = await Game.findById(game._id);
+            const updateGame = await Developer.findById(developer._id);
 
             expect(updateGame.name).toBe(newName);
         });
@@ -253,33 +261,34 @@ describe('/api/games', () => {
             expect(res.body).toHaveProperty("_id");
             expect(res.body).toHaveProperty("name", newName);
         });
+
     });
 
     describe('DELETE /:id', () => {
         let token;
-        let game;
+        let date;
         let id;
 
         const exec = async () => {
             return await request(server)
-                .delete('/api/games/' + id)
+                .delete('/api/developers/' + id)
                 .set('x-auth-token', token)
                 .send();
         };
 
         beforeEach(async () => {
-            // Before each test we need to create a genre and 
-            // put it in the database.  
-
-            game = new Game({
-                name: 'game1',
-                species: "RTS",
-                developer_id: mongoose.Types.ObjectId()
-            });
-            await game.save();
-
-            id = game._id;
             token = new Player({ isAdmin: true }).generateAuthToken();
+
+            developer = new Developer({
+                name: "developer1",
+                dateOfSubmission: date,
+                country: 'test2'
+            });
+            await developer.save();
+
+            id = developer._id;
+            newName = 'updatedName';
+            date = Date.now();
         })
 
         it('should return 401 if client is not logged in', async () => {
@@ -306,7 +315,7 @@ describe('/api/games', () => {
             expect(res.status).toBe(404);
         });
 
-        it('should return 404 if no game with the given id was found', async () => {
+        it('should return 404 if no developer with the given id was found', async () => {
             id = mongoose.Types.ObjectId();
 
             const res = await exec();
@@ -314,19 +323,11 @@ describe('/api/games', () => {
             expect(res.status).toBe(404);
         });
 
-        it('should delete the genre if input is valid', async () => {
-            await exec();
-
-            const gameInDb = await Game.findById(id);
-
-            expect(gameInDb).toBeNull();
-        });
-
         it('should return the removed game', async () => {
             const res = await exec();
 
-            expect(res.body).toHaveProperty('_id', game._id.toHexString());
-            expect(res.body).toHaveProperty('name', game.name)
+            expect(res.body).toHaveProperty('_id', developer._id.toHexString());
+            expect(res.body).toHaveProperty('name', developer.name)
         });
     });
 });
